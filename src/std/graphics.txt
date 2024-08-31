@@ -1,0 +1,137 @@
+@DEFINE _GRAPHICS 1
+@DEFINE _ASCII_OFFSET 31
+
+@REQUIRES DRAWBASE
+@REQUIRES SIZE_X        #multiples of 4 (char width)
+@REQUIRES SIZE_Y
+@REQUIRES _UTILS
+@REQUIRES _MATH
+
+#bottom left is (0,0) (change?)
+
+#big chungus char lookup table
+.char_table
+0 9346 23040 24445
+11738 6284 9134 8704
+17556 5265 2728 1488
+17 448 1 2184
+31599 13463 31183 31207
+23524 29671 29679 31012
+31727 31716 65 1041
+17492 3640 5393 31106
+31567 31725 31471 29263
+15211 29647 29641 29551
+23533 29847 18735 23277
+4687 24429 31597 31599
+31689 27503 31469 29671
+29842 23407 23385 23421
+23213 23506 30863 25750
+672 13459 10752 7
+5120 1966 5995 3150
+19822 1374 17874 3443
+5997 8338 16675 6893
+9362 3053 1901 1386
+1881 3444 3657 3187
+11924 2926 2905 2941
+2709 2931 3871 17620
+9362 5521 1712 0
+
+&_gra_1 &_gra_2 &_gra_3 &_gra_4
+&_gra_5 &_gra_6 &_gra_7 &_gra_8
+
+#a = charID, b = color; c = xpos, d = ypos
+@MACRO plot_char {
+    mul d $SIZE_X *_gra_1       #get base base pointer
+    add c *_gra_1 *_gra_1
+    add $DRAWBASE *_gra_1 *_gra_6       #keep copy of base base pointer
+    cmovz $0 *_gra_6 *draw_ptr
+    
+    add a $(.char_table-1) *addr      #get character pointed to by a
+    sub *addr $_ASCII_OFFSET *addr
+    cmovz $0 &addr *_gra_1
+
+
+    cmovz $0 $-5 *_gra_7        
+    :row_loop
+        cmovz $0 $-3 *_gra_8    #reset loop counter (-3-1)
+        :col_loop
+            mod *_gra_1 $2 *_gra_2          #plot = a % 2
+
+            sub *_gra_1 *_gra_2 *_gra_1     #a = a >> 1
+            div *_gra_1 $2 *_gra_1
+            mul *_gra_2 b &draw_ptr     #store color into address pointed to y draw_ptr
+            
+            add *draw_ptr $1 *draw_ptr  #inc pointer
+
+            add *_gra_8 $1 *_gra_8      #for loop logic
+        cmovltz *_gra_8 :col_loop PC
+
+        add *_gra_6 $SIZE_X *_gra_6       #increase draw_ptr 
+        cmovz $0 *_gra_6 *draw_ptr
+
+        add *_gra_7 $1 *_gra_7      #for loop logic
+    cmovltz *_gra_7 :row_loop PC
+    }
+
+@MACRO plot_char_transparent {
+    mul d $SIZE_X *_gra_1       #get base base pointer
+    add c *_gra_1 *_gra_1
+    add $DRAWBASE *_gra_1 *_gra_6       #keep copy of base base pointer
+    cmovz $0 *_gra_6 *draw_ptr
+    
+    add a $(.char_table-1) *addr      #get character pointed to by a
+    sub *addr $_ASCII_OFFSET *addr
+    cmovz $0 &addr *_gra_1
+
+
+    cmovz $0 $-5 *_gra_7        
+    :row_loop
+        cmovz $0 $-3 *_gra_8    #reset loop counter (-3-1)
+        :col_loop
+            mod *_gra_1 $2 *_gra_2          #plot = a % 2
+
+            sub *_gra_1 *_gra_2 *_gra_1     #a = a >> 1
+            div *_gra_1 $2 *_gra_1
+            cmovz *_gra_2 :skip_set PC
+            mul *_gra_2 b &draw_ptr     #store color into address pointed to y draw_ptr
+            
+            :skip_set
+            add *draw_ptr $1 *draw_ptr  #inc pointer
+
+            add *_gra_8 $1 *_gra_8      #for loop logic
+        cmovltz *_gra_8 :col_loop PC
+
+        add *_gra_6 $SIZE_X *_gra_6       #increase draw_ptr 
+        cmovz $0 *_gra_6 *draw_ptr
+
+        add *_gra_7 $1 *_gra_7      #for loop logic
+    cmovltz *_gra_7 :row_loop PC
+    }
+
+#a = base ptr, b = color; c = xpos, d = ypos
+#leaves *_gra_3 as x_pos and *_gra_4 as y_pos
+@MACRO plot_str {       #_gra_3 4 5 not used by plot char
+    mov a *addr
+    mov c *_gra_3       #x_pos
+    mov d *_gra_4       #y_pos
+
+    :loop
+        mov &addr *_gra_5
+        inc *addr
+        brceq *_gra_5 $'\n' :newline
+        brceq *_gra_5 $'\0' :break
+
+        plot_char *_gra_5 b *_gra_3 *_gra_4
+
+        add *_gra_3 $4 *_gra_3
+    jmp :loop
+    :newline
+        mov c *_gra_3
+        sub *_gra_4 $6 *_gra_4
+    jmp :loop
+    :break
+    }
+
+
+
+

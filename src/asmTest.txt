@@ -1,0 +1,10 @@
+@HEADER <utils>
+
+&a=1 &b=2 &c=3 &d=4
+
+
+._start
+
+add *c *a *b
+
+jmp ._start

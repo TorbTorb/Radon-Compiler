@@ -1,0 +1,75 @@
+@DEFINE _KEYBOARD 1
+
+@REQUIRES _UTILS
+@REQUIRES _CHARS
+@REQUIRES KEYBOARD_BASE
+
+#standard library for dealing with worldedit keyboard input
+# (//hpos is sccuffed with signs)
+
+
+@DEFINE SHIFT 256
+@DEFINE CTRL 257
+
+.keyboard_lut
+'\s' SHIFT 'z' 'x'
+'c' 'v' 'b' 'n'
+'m' ''' '"' ':'
+';' '_' '$' '\hashtag'
+'@' '\arrow_left' '\arrow_down' '\arrow_right'
+'<' '>' '~' '='
+'0' '1' '2' '3'
+'\0' 'a' 's' 'd'
+'f' 'g' 'h' 'j'
+'k' 'l' '.' ','
+'!' '?' '{' '}'
+'\0' '\arrow_up' '\0' '%'
+'^' '&' '|' '\'
+'4' '5' '6' CTRL
+'q' 'w' 'e' 'r'
+'t' 'y' 'u' 'i'
+'o' 'p' '(' ')'
+'[' ']' '`' '\0'
+'\b' '\n' '\0' '+'
+'-' '*' '/' '7'
+'8' '9' 0 0
+
+
+
+
+
+
+&_shift &_ctrl &_keyboard_1 &_keyboard_2
+
+#a is where to save read char
+@MACRO keyboard_to_char {
+    movfrom $KEYBOARD_BASE *_keyboard_1         #get saved char address
+    add *_keyboard_1 .keyboard_lut *addr        #offset for lut
+    mov &addr *_keyboard_1                      #get char
+    brcneq *_keyboard_1 $SHIFT :skip_shift
+        mov $1 *_shift
+        mov $'\0' a
+        jmp :end
+    :skip_shift
+    
+    
+    brcneq *_keyboard_1 $CTRL :skip_ctrl        #to be implemented ig
+        mov $1 *_ctrl
+        mov $'\0' a
+        jmp :end
+    :skip_ctrl
+
+    #check if normal char and if yes and shift is active then subtract 32 (capitlization)
+
+    brclt *_keyboard_1 $'a' :skip_capitalization
+        brcgt *_keyboard_1 $'z' :skip_capitalization
+            mul *_shift $32 *_keyboard_2
+            sub *_keyboard_1 *_keyboard_2 *_keyboard_1
+    :skip_capitalization
+
+    mov $0 *_shift      #reset shift and ctrl
+    mov $0 *_ctrl
+
+    mov *_keyboard_1 a
+    :end
+    }

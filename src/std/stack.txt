@@ -1,0 +1,18 @@
+@DEFINE _STACK 1
+
+@REQUIRES STACKBASE
+@REQUIRES _UTILS
+
+&SP=STACKBASE &_stack_1 &_stack_2 &_stack_3
+
+
+
+#stack is growing into the nagative
+#mem = [...<-stack, imms, pc, vars, program, ...]
+
+@MACRO push dec *SP; movto *SP a        #push(a)   ->   mem[--PC] = a
+@MACRO pop get a *SP; inc *SP           #a = pop()   ->   a = mem[PC++]     #maybe unnecesary???
+
+@MACRO peek add *addr *SP b; mov a &addr        #a = peek(b)  ->  a = mem[PC + b]       peek backwards
+@MACRO shrink add *SP *SP abs               # stack.shrink(a)     ->   PC += a
+

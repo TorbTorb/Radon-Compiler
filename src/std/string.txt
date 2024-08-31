@@ -1,0 +1,176 @@
+@DEFINE _STRING 1
+@REQUIRES _CHARS
+@REQUIRES _UTILS
+
+&_str_1 &_str_2 &_str_3 &_str_4
+
+###################################
+# a IS ALWAYS BASE POINTER TO STR #
+###################################
+
+            #a is base pointer, b is char, c is index, 
+@MACRO set_char add a c *addr; cmovz $0 b &addr     #move a into b+c
+@MACRO set_char_imm cmovz $0 b (a+c)
+
+
+            #puts the actual char pointed to by (a + b) into c
+            #a = base ptr, b = index, c = dest
+@MACRO get_char add a b *addr; cmovz $0 &addr c
+@MACRO get_char_imm cmovz $0 (a+b) c
+
+
+
+@MACRO append_char {        #a is base pointer, b is char
+    mov a *addr
+    :loop
+        mov &addr *_str_1
+        inc *addr
+        brcnz *_str_1 :loop
+    #*addr is poiting to next char after null terminator
+    movto $'\0' *addr
+    dec *addr
+    movto b *addr
+    }
+@MACRO remove_last {        #a is base pointer
+    mov a *addr
+    :loop
+        mov &addr *_str_1
+        inc *addr
+        brcnz *_str_1 :loop
+    #*addr is poiting to next char after null terminator
+    sub *addr $2 *addr      #so we subtract 2
+    movto $'\0' *addr
+    }
+@MACRO insert_char {        #a is base ptr, b is char, c is index      (shifts the part after inserted char)
+    add a c *addr_read          #index where to insert char
+    mov b *_str_2               #current char
+    :loop
+        mov *addr_read *addr_write
+        
+        mov &addr_read *_str_3      #read char
+        mov *_str_2 &addr_write     #write old char
+
+        brcz *_str_2 :break
+
+        mov *_str_3 *_str_2
+        inc *addr_read
+    jmp :loop
+    :break
+    }
+@MACRO remove {             #a is base ptr, b is index      (shifts the part after removed char into place)
+    add a b *addr_read          #index where to remove char
+
+    :loop
+        mov *addr_read *addr_write
+        inc *addr_read
+        mov &addr_read *_str_2      #read char
+        mov *_str_2 &addr_write     #write new char
+
+        brcnz *_str_2 :loop
+    }
+@MACRO concat_str {         #a is base ptr for str1, b is base pointer for str2, c is base ptr for dest str (c = a + b)
+    mov a *addr_a
+    mov b *addr_b
+    mov c *addr_c_1
+    :loop_a
+        mov &addr_a *_str_1
+        brcz *_str_1 :break_a
+        mov *_str_1 &addr_c_1
+
+        inc *addr_a
+        inc *addr_c_1
+    jmp :loop_a
+    :break_a
+    mov *addr_c_1 *addr_c_2
+
+    :loop_b
+        mov &addr_b *_str_1
+        mov *_str_1 &addr_c_2
+        brcz *_str_1 :break_b    #different order so we copy null terminator too
+
+        inc *addr_b
+        inc *addr_c_2
+    jmp :loop_b
+    :break_b
+    }
+@MACRO str_copy {           #copy a into b
+    mov a *addr_read
+    mov b *addr_write
+    :loop
+        mov &addr_read *_str_1
+        mov *_str_1 &addr_write
+        inc *addr_read
+        inc *addr_write
+        brcnz *_str_1 :loop
+    #*addr is poiting to next char after null terminator
+    }
+@MACRO size {               #a is base ptr, b is where to put size
+    mov a *addr
+    :loop
+        brcz &addr :break
+        inc *addr
+        jmp :loop
+    :break
+    #*addr is poiting to null terminator
+    sub *addr a b #remove offset
+    }
+@MACRO length {             #a is base ptr, b is where to put size
+    size a b
+    }
+@MACRO end {                #a is base pointer, b is where to put pointer to end (last character)
+    mov a *addr
+    :loop
+        brcz &addr :break
+        inc *addr
+        jmp :loop
+    :break
+    #*addr is poiting to null terminator
+    sub *addr $1 b
+    }
+@MACRO at {                 #a is base ptr, b is index, c is where to save char
+    add a b *addr
+    mov &addr c
+    }
+@MACRO back {               #a is base ptr, b is where to save last char
+    end a *addr
+    mov &addr b
+    }
+@MACRO front {              #a is base ptr, b is where to save first char
+
+    mov a *addr
+    mov &addr b
+    }
+@MACRO equal {              #a is ptr for str1, b is base ptr for str 2, c is return value (TRUE if equal, else FALSE)
+    mov a *addr_a
+    mov b *addr_b
+    :loop
+        mov &addr_a *_str_1     #get chars
+        mov &addr_b *_str_2
+        brcz *_str_1 :break_a
+        brcz *_str_2 :break_b
+        
+        inc *addr_a
+        inc *addr_b
+        brceq *_str_1 *_str_2 :loop     #non null and equal
+    mov $FALSE c
+    jmp :end
+    
+    :break_a
+        mov $FALSE c
+        cmovz *_str_2 $TRUE c        #if b == \0 then its equal
+        jmp :end
+    
+    :break_b
+        mov $FALSE c
+        cmovz *_str_1 $TRUE c        #if b == \0 then its equal
+    :end
+    }
+
+
+
+
+
+
+
+
+

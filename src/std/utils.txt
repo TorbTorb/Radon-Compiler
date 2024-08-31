@@ -1,0 +1,55 @@
+@DEFINE _UTILS 1
+
+@DEFINE TRUE 1
+@DEFINE FALSE 0
+
+#variables
+&_utils_1 &_utils_2 &_utils_3 &_utils_4
+
+
+#flow control
+@MACRO hlt :hlt; jmp :hlt													#infinte loop, essentially halting the program
+@MACRO jmp cmovz PC a $0															#jump to a
+
+@MACRO brcz cmovz PC a b															#branch to a if b == 0
+@MACRO brcnz brcz b :skip; jmp a; :skip									            #branch to a if b != 0
+
+@MACRO brceq sub *_utils_1 b c ; cmovz PC a *_utils_1								#branch to a if b == c
+@MACRO brcneq brceq b c :skip; jmp a; :skip		                                    #branch to a if b != c
+
+@MACRO brclt sub *_utils_1 b c; cmovltz PC a *_utils_1								#branch to a is b < c
+@MACRO brcleq brclt c b :skip; jmp a; :skip	                                        #branch to a is b <= c
+
+@MACRO brcgt brclt a c b 								                            #branch to a is b > c
+@MACRO brcgeq brcleq a c b                                                          #branch to a is b >= c
+
+
+
+#memory stuffs :3
+@MACRO clr mov a $0       									#move 0 into a
+@MACRO mov cmovz a b $0										#move b into a
+@MACRO movto _movto $0 a b 			        #move b into the address pointed to by a    (*a = b)
+@MACRO movind movto a b                        			    #move a into the address pointed to by b
+@MACRO get _get a b $0                  #move contents pointed to by b into a (a = *b)
+@MACRO movfrom get a b                #move contents pointed to by b into a
+
+
+
+
+
+#simple mathy stuff
+@MACRO inc add a a $1								    #increment a
+@MACRO dec sub a a $1							        #decrement a
+@MACRO shift_by_imm mul a $(2**c) b					    #shift a by immediate (negative integers for rsh)   a = b << c      #c must be immediate
+@MACRO abs sub *_utils_1 $0 a ;cmovltz a *_utils_1 a    #a = abs(a)
+@MACRO min mov c b; sub *_utils_1 a b; cmovltz c a *_utils_1            #c = min(a, b)
+@MACRO max mov c a; sub *_utils_1 a b; cmovltz c b *_utils_1            #c = max(a, b)
+
+
+
+
+
+
+#misc
+@MACRO wait _WAIT $1 0 0        #gets interpreted as cmovz as $1 to not move
+@MACRO nop add $0 $0 $0

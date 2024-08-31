@@ -1,0 +1,17 @@
+@DEFINE _MATH 1
+
+@DEFINE PI    3.14159265358979323846
+@DEFINE EULER 2.71828182845904523536
+
+&_math_1 &_math_2 &_math_3 &_math_4
+
+													#a = iterations (N * 2 + 1, (3,5,7,9) are valid), b = x, c = dest
+@MACRO sin cmovz $0 $1 *_math_1; mod b $(2*PI) c; cmovz $0 c *_math_3; mul c c *_math_4; sub $0 *_math_4 *_math_4; :loop_sin; add *_math_1 $1 *_math_1; cmovz $0 *_math_1 *_math_2; add *_math_1 $1 *_math_1; mul *_math_1 *_math_2 *_math_2; div *_math_4 *_math_2 *_math_2; mul *_math_3 *_math_2 *_math_3; add c *_math_3 c; sub *_math_1 a *_math_2; cmovz *_math_2 :skip_brc PC; cmovz $0 :loop_sin PC; :skip_brc
+@MACRO cos cmovz $0 $1 *_math_1; add b $(0.5*PI) c; mod c $(2*PI) c; cmovz $0 c *_math_3; mul c c *_math_4; sub $0 *_math_4 *_math_4; :loop_sin; add *_math_1 $1 *_math_1; cmovz $0 *_math_1 *_math_2; add *_math_1 $1 *_math_1; mul *_math_1 *_math_2 *_math_2; div *_math_4 *_math_2 *_math_2; mul *_math_3 *_math_2 *_math_3; add c *_math_3 c; sub *_math_1 a *_math_2; cmovz *_math_2 :skip_brc PC; cmovz $0 :loop_sin PC; :skip_brc
+
+
+													#rounds a to nearest integer (proper rounding)   (a = a + 0.5*sign(a); a = a - (a%1))
+@MACRO round cmovz $0 $0.5 *_math_3; cmovltz a $-0.5 *_math_3; add a *_math_3 *_math_1; mod *_math_1 $1 *_math_2; sub *_math_1 *_math_2 a
+													#truncates decimal places of a	(a = a-(a%1))
+@MACRO trunc mod a $1 *_math_1; sub a *_math_1 a
+@MACRO floor mod a $1 *_math_1; sub a *_math_1 a
